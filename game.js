@@ -92,20 +92,17 @@
     '0->3': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]]
   };
 
-  // --- FUNÇÃO AUXILIAR PARA RENDERIZAR ÍCONES (Sprite Sheet 30x43 ou Emoji do Sapo) ---
-  // A sprite sheet contém 30 ícones dispostos horizontalmente (índices 0 a 29).
-  // Para qualquer índice N, a posição x percentual exata é: calc(N / 29 * 100%)
+  // --- FUNÇÃO AUXILIAR PARA RENDERIZAR ÍCONES (PNGs individuais 32x32px em assets/items/) ---
+  // Não usa corte de sprite sheet: cada ícone é carregado diretamente como imagem própria (<img>)
+  // com renderização pixelada (image-rendering: pixelated) para máxima nitidez pixel art.
   function getItemIconHTML(item, extraClass = '') {
-    if (!item) return '';
-    if (item.isEmoji || item.iconIndex === undefined) {
-      return `<span class="item-emoji-icon ${extraClass}">${item.emoji || '🐸'}</span>`;
-    }
-    return `<span class="item-sprite-icon ${extraClass}" style="background-position: calc(${item.iconIndex} / 29 * 100%) 0;"></span>`;
+    if (!item || !item.sprite) return '';
+    return `<img src="${item.sprite}" class="item-sprite-icon ${extraClass}" alt="${item.name}" draggable="false" />`;
   }
 
-  // --- CATÁLOGO DOS 27 ITENS ROGUELIKE (Tier 0 a 4, Passivos e Ativos) ---
+  // --- CATÁLOGO DOS 28 ITENS ROGUELIKE (Tier 0 a 4, Passivos e Ativos) ---
   // Pesos de sorteio balanceados por tier (Tier 0 = 60, Tier 1 = 35, Tier 2 = 20, Tier 3 = 12, Tier 4 = 6)
-  // Ícones não associados (sem uso): #7 (coração/gema), #16 (dentes azuis), #20 (impressora preta)
+  // Sprite-0023.png é mantido sem uso conforme especificação.
   const ROGUELIKE_ITEMS = {
     oculos: {
       id: 'oculos',
@@ -114,10 +111,10 @@
       tierName: 'TIER 1',
       tierClass: 'tier-1',
       quote: 'Eu estou venho peças em dobro!',
-      iconIndex: 0,
+      sprite: 'assets/items/Sprite-0001.png',
       type: 'passive',
       weight: 35,
-      desc: (stacks) => `Duplica seus itens passivos, porém as peças do Tetris ficam duas vezes mais rápidas`
+      desc: (stacks) => `Duplica seus itens passivos, porém as peças ficam duas vezes mais rápidas`
     },
     bomba: {
       id: 'bomba',
@@ -126,11 +123,11 @@
       tierName: 'TIER 3',
       tierClass: 'tier-3',
       quote: 'Explosão Controlada',
-      iconIndex: 1,
+      sprite: 'assets/items/Sprite-0002.png',
       type: 'active',
       cooldownPieces: 30,
       weight: 12,
-      desc: (stacks) => `Ativo: explode uma área 3x3 escolhida a cada 30 peças colocadas`
+      desc: (stacks) => `Ativo: explode uma área 3x3 escolhida a cada 30 peças`
     },
     ima: {
       id: 'ima',
@@ -139,10 +136,10 @@
       tierName: 'TIER 0',
       tierClass: 'tier-0',
       quote: 'Vem aqui, pecinha...',
-      iconIndex: 2,
+      sprite: 'assets/items/Sprite-0003.png',
       type: 'passive',
       weight: 60,
-      desc: (stacks) => `O movimento das peças passa a ser controlado como uma onda senoidal`
+      desc: (stacks) => `Movimento das peças vira uma onda`
     },
     escudo: {
       id: 'escudo',
@@ -151,10 +148,10 @@
       tierName: 'TIER 2',
       tierClass: 'tier-2',
       quote: 'NÃO HOJE.',
-      iconIndex: 3,
+      sprite: 'assets/items/Sprite-0004.png',
       type: 'passive',
       weight: 20,
-      desc: (stacks) => `Impede o Game Over com uma animação de escudo; quando usado, sai dos itens e remove 1 linha`
+      desc: (stacks) => `Impede o Game Over, remove 1 linha e sai do inventário`
     },
     relogio: {
       id: 'relogio',
@@ -163,11 +160,12 @@
       tierName: 'TIER 3',
       tierClass: 'tier-3',
       quote: 'Eu quero voltar.',
-      iconIndex: 4,
+      sprite: 'assets/items/Sprite-0005.png',
       type: 'active',
       maxCharges: 3,
+      chargesRemaining: 3,
       weight: 12,
-      desc: (stacks) => `Ativo: permite voltar para qualquer estado dos últimos 20 segundos (3 usos disponíveis)`
+      desc: (stacks) => `Ativo: volta o estado do jogo em até 20s, 3 usos`
     },
     d6: {
       id: 'd6',
@@ -176,10 +174,24 @@
       tierName: 'TIER 4',
       tierClass: 'tier-4',
       quote: 'Role os dados novamente.',
-      iconIndex: 22,
+      sprite: 'assets/items/Sprite-0006.png',
       type: 'passive',
       weight: 6,
-      desc: (stacks) => `Permite trocar os itens na hora de escolher (${stacks} troca${stacks > 1 ? 's' : ''} com o botão D6)`
+      desc: (stacks) => `Permite trocar os itens na escolha, com botão de troca que ganha mais usos por stack`
+    },
+    backspace_key: {
+      id: 'backspace_key',
+      name: 'Backspace Key',
+      tier: 4,
+      tierName: 'TIER 4',
+      tierClass: 'tier-4',
+      quote: 'Apaga tudo e recomeça.',
+      sprite: 'assets/items/Sprite-0007.png',
+      type: 'active',
+      maxCharges: 1,
+      chargesRemaining: 1,
+      weight: 6,
+      desc: (stacks) => `Ativo, uso único: remove TODAS as peças do tabuleiro (limpa o tabuleiro inteiro) e zera a pontuação do jogador (score total e fichas/mult, se existirem). Depois de usado, é consumido e sai do inventário`
     },
     tijolo: {
       id: 'tijolo',
@@ -188,10 +200,10 @@
       tierName: 'TIER 0',
       tierClass: 'tier-0',
       quote: 'Construção pesada.',
-      iconIndex: 12,
+      sprite: 'assets/items/Sprite-0008.png',
       type: 'passive',
       weight: 60,
-      desc: (stacks) => `Adiciona 3 blocos aleatórios ao tabuleiro a cada 20 peças colocadas`
+      desc: (stacks) => `Adiciona 3 blocos aleatórios ao tabuleiro a cada 20 peças`
     },
     dna: {
       id: 'dna',
@@ -200,35 +212,10 @@
       tierName: 'TIER 0',
       tierClass: 'tier-0',
       quote: 'Mutação!',
-      iconIndex: 8,
+      sprite: 'assets/items/Sprite-0009.png',
       type: 'passive',
       weight: 60,
-      desc: (stacks) => `A próxima peça pode sofrer uma mutação aleatória e virar uma forma difícil de encaixar`
-    },
-    liquido_misterioso: {
-      id: 'liquido_misterioso',
-      name: 'Líquido Misterioso',
-      tier: 4,
-      tierName: 'TIER 4',
-      tierClass: 'tier-4',
-      quote: 'Isso ai não foi testado bem',
-      iconIndex: 11,
-      type: 'active',
-      cooldownPieces: 25,
-      weight: 6,
-      desc: (stacks) => `Ativo: permite editar a peça atual (adicionar/remover blocos em grade 5x5)`
-    },
-    fogo: {
-      id: 'fogo',
-      name: 'Fogo',
-      tier: 4,
-      tierName: 'TIER 4',
-      tierClass: 'tier-4',
-      quote: 'QUEIMA TUDO!',
-      iconIndex: 10,
-      type: 'passive',
-      weight: 6,
-      desc: (stacks) => `Queima uma linha inteira e as linhas adjacentes, transformando os blocos destruídos em pontos`
+      desc: (stacks) => `Próxima peça pode virar uma forma irregular`
     },
     pocao: {
       id: 'pocao',
@@ -237,11 +224,36 @@
       tierName: 'TIER 0',
       tierClass: 'tier-0',
       quote: 'Bebe aí, confia.',
-      iconIndex: 9,
+      sprite: 'assets/items/Sprite-0010.png',
       type: 'active',
-      cooldownPieces: 15,
+      cooldownPieces: 20,
       weight: 60,
-      desc: (stacks) => `Ativo: efeito aleatório imprevisível que pode ajudar ou atrapalhar`
+      desc: (stacks) => `Ativo: efeito aleatório, pode ajudar ou atrapalhar`
+    },
+    fogo: {
+      id: 'fogo',
+      name: 'Fogo',
+      tier: 4,
+      tierName: 'TIER 4',
+      tierClass: 'tier-4',
+      quote: 'QUEIMA TUDO!',
+      sprite: 'assets/items/Sprite-0011.png',
+      type: 'passive',
+      weight: 6,
+      desc: (stacks) => `Queima uma linha e as adjacentes, vira pontos`
+    },
+    liquido_misterioso: {
+      id: 'liquido_misterioso',
+      name: 'Líquido Misterioso',
+      tier: 4,
+      tierName: 'TIER 4',
+      tierClass: 'tier-4',
+      quote: 'Isso ai não foi testado bem',
+      sprite: 'assets/items/Sprite-0012.png',
+      type: 'active',
+      cooldownPieces: 25,
+      weight: 6,
+      desc: (stacks) => `Ativo: edita a peça atual (grade 5x5)`
     },
     fantasma: {
       id: 'fantasma',
@@ -250,10 +262,10 @@
       tierName: 'TIER 0',
       tierClass: 'tier-0',
       quote: 'Buuu...',
-      iconIndex: 13,
+      sprite: 'assets/items/Sprite-0013.png',
       type: 'passive',
       weight: 60,
-      desc: (stacks) => `Chance de a peça em queda ficar totalmente transparente e invisível`
+      desc: (stacks) => `Chance da peça ficar transparente`
     },
     controle: {
       id: 'controle',
@@ -262,10 +274,10 @@
       tierName: 'TIER 0',
       tierClass: 'tier-0',
       quote: 'Pensa, pensa...',
-      iconIndex: 14,
+      sprite: 'assets/items/Sprite-0014.png',
       type: 'passive',
       weight: 60,
-      desc: (stacks) => `Embaralha os controles laterais (inverte esquerda/direita), porém dobra os pontos ganhos`
+      desc: (stacks) => `Embaralha controles, dobra pontos`
     },
     extintor: {
       id: 'extintor',
@@ -274,10 +286,22 @@
       tierName: 'TIER 0',
       tierClass: 'tier-0',
       quote: 'MEUS OLHOS',
-      iconIndex: 15,
+      sprite: 'assets/items/Sprite-0015.png',
       type: 'passive',
       weight: 60,
-      desc: (stacks) => `Solta fumaça densa e bloqueia a visão do tabuleiro temporariamente a cada 18 peças`
+      desc: (stacks) => `Fumaça bloqueia a visão temporariamente`
+    },
+    relogio_quebrado: {
+      id: 'relogio_quebrado',
+      name: 'Relógio Quebrado',
+      tier: 0,
+      tierName: 'TIER 0',
+      tierClass: 'tier-0',
+      quote: 'Tempo é relativo.',
+      sprite: 'assets/items/Sprite-0016.png',
+      type: 'passive',
+      weight: 60,
+      desc: (stacks) => `Passivo: a velocidade de queda da peça atual muda aleatoriamente (pode acelerar ou voltar ao normal, de forma imprevisível)`
     },
     vulcao: {
       id: 'vulcao',
@@ -286,10 +310,10 @@
       tierName: 'TIER 1',
       tierClass: 'tier-1',
       quote: 'ERUPÇÃO!',
-      iconIndex: 17,
+      sprite: 'assets/items/Sprite-0017.png',
       type: 'passive',
       weight: 35,
-      desc: (stacks) => `Erupção periódica: remove blocos da parte inferior do tabuleiro a cada 25 peças`
+      desc: (stacks) => `Remove blocos da parte inferior`
     },
     meteoro: {
       id: 'meteoro',
@@ -298,11 +322,11 @@
       tierName: 'TIER 3',
       tierClass: 'tier-3',
       quote: 'OLHA PRA CIMA!',
-      iconIndex: 18,
+      sprite: 'assets/items/Sprite-0018.png',
       type: 'active',
       cooldownPieces: 25,
       weight: 12,
-      desc: (stacks) => `Ativo: lança um meteoro devastador que destrói uma área escolhida pelo jogador`
+      desc: (stacks) => `Ativo: destrói uma área escolhida`
     },
     clone: {
       id: 'clone',
@@ -311,23 +335,22 @@
       tierName: 'TIER 0',
       tierClass: 'tier-0',
       quote: 'Eu posso fazer isso duas vezes.',
-      iconIndex: 19,
+      sprite: 'assets/items/Sprite-0019.png',
       type: 'passive',
       weight: 60,
-      desc: (stacks) => `Duplica a próxima peça sem avisar, podendo causar uma situação desafiadora`
+      desc: (stacks) => `Duplica a próxima peça sem avisar`
     },
-    sapo: {
-      id: 'sapo',
-      name: 'Sapo',
+    learn_how_to_jump: {
+      id: 'learn_how_to_jump',
+      name: 'Learn how to jump',
       tier: 0,
       tierName: 'TIER 0',
       tierClass: 'tier-0',
       quote: 'Pula, pula!',
-      isEmoji: true,
-      emoji: '🐸',
+      sprite: 'assets/items/Sprite-0020.png',
       type: 'passive',
       weight: 60,
-      desc: (stacks) => `A próxima peça salta repentinamente para os lados durante a descida`
+      desc: (stacks) => `A peça pula para posições horizontais aleatórias durante a queda`
     },
     vassoura: {
       id: 'vassoura',
@@ -336,11 +359,11 @@
       tierName: 'TIER 1',
       tierClass: 'tier-1',
       quote: 'Só vou dar uma limpada.',
-      iconIndex: 21,
+      sprite: 'assets/items/Sprite-0021.png',
       type: 'active',
       cooldownPieces: 20,
       weight: 35,
-      desc: (stacks) => `Ativo: remove 2 blocos escolhidos manualmente pelo jogador no tabuleiro`
+      desc: (stacks) => `Ativo: remove 2 blocos escolhidos`
     },
     pena: {
       id: 'pena',
@@ -349,22 +372,10 @@
       tierName: 'TIER 3',
       tierClass: 'tier-3',
       quote: 'Levinho...',
-      iconIndex: 28,
+      sprite: 'assets/items/Sprite-0022.png',
       type: 'passive',
       weight: 12,
-      desc: (stacks) => `A peça atual cai 20% mais devagar por stack`
-    },
-    moeda: {
-      id: 'moeda',
-      name: 'Moeda',
-      tier: 1,
-      tierName: 'TIER 1',
-      tierClass: 'tier-1',
-      quote: 'Dinheiro é dinheiro.',
-      iconIndex: 5,
-      type: 'passive',
-      weight: 35,
-      desc: (stacks) => `Ao completar uma linha, pequena chance de ganhar pontos e fichas extras`
+      desc: (stacks) => `Peça atual cai 20% mais devagar`
     },
     balao: {
       id: 'balao',
@@ -373,10 +384,10 @@
       tierName: 'TIER 1',
       tierClass: 'tier-1',
       quote: 'Não vai embora!',
-      iconIndex: 24,
+      sprite: 'assets/items/Sprite-0024.png',
       type: 'passive',
       weight: 35,
-      desc: (stacks) => `A próxima peça fica 20% mais lenta enquanto estiver caindo`
+      desc: (stacks) => `Próxima peça fica 20% mais lenta`
     },
     construtor: {
       id: 'construtor',
@@ -385,11 +396,11 @@
       tierName: 'TIER 2',
       tierClass: 'tier-2',
       quote: 'Vou colocar só um aqui.',
-      iconIndex: 25,
+      sprite: 'assets/items/Sprite-0025.png',
       type: 'active',
       cooldownPieces: 35,
       weight: 20,
-      desc: (stacks) => `Ativo: coloca 2 blocos individuais em espaços vazios a cada 35 peças`
+      desc: (stacks) => `Ativo: coloca 2 blocos a cada 35 peças`
     },
     olho_futuro: {
       id: 'olho_futuro',
@@ -398,10 +409,10 @@
       tierName: 'TIER 4',
       tierClass: 'tier-4',
       quote: 'Eu já vi isso acontecer.',
-      iconIndex: 26,
+      sprite: 'assets/items/Sprite-0026.png',
       type: 'passive',
       weight: 6,
-      desc: (stacks) => `Mostra as próximas 10 peças na prévia (Next Queue estendida)`
+      desc: (stacks) => `Mostra as próximas 10 peças`
     },
     glitch: {
       id: 'glitch',
@@ -410,11 +421,11 @@
       tierName: 'TIER 4',
       tierClass: 'tier-4',
       quote: 'Isso definitivamente não é um bug.',
-      iconIndex: 27,
+      sprite: 'assets/items/Sprite-0027.png',
       type: 'active',
       cooldownPieces: 40,
       weight: 6,
-      desc: (stacks) => `Ativo: por alguns segundos (6s), as regras de colisão são desligadas`
+      desc: (stacks) => `Desliga colisão por alguns segundos`
     },
     pedra: {
       id: 'pedra',
@@ -423,10 +434,10 @@
       tierName: 'TIER 0',
       tierClass: 'tier-0',
       quote: 'É uma pedra, do que você esperava',
-      iconIndex: 6,
+      sprite: 'assets/items/Sprite-0028.png',
       type: 'passive',
       weight: 60,
-      desc: (stacks) => `Você recebe uma pedra (sem efeito relevante)`
+      desc: (stacks) => `Sem efeito relevante`
     },
     trevo_4_folhas: {
       id: 'trevo_4_folhas',
@@ -435,10 +446,9 @@
       tierName: 'TIER 4',
       tierClass: 'tier-4',
       quote: 'Sorte pura.',
-      iconIndex: 29,
+      sprite: 'assets/items/Sprite-0029.png',
       type: 'passive',
-      weight: 6,
-      desc: (stacks) => `Permite prever (ver com antecedência) quais itens de Tier 0 vão aparecer nas próximas escolhas`
+      desc: (stacks) => `Itens comuns de Tier 0 somem do sorteio de cartas`
     }
   };
 
@@ -1083,6 +1093,11 @@
       this.holdSubtextEl = document.getElementById('holdSubtext');
       this.trevoPreviewEl = document.getElementById('trevoPreview');
       this.smokeOverlayEl = document.getElementById('smokeOverlay');
+      if (this.smokeOverlayEl) {
+        this.smokeOverlayEl.classList.add('hidden');
+        this.smokeOverlayEl.classList.remove('active');
+        this.smokeOverlayEl.style.display = 'none';
+      }
 
       // Barra Separada de Itens Ativos
       this.activeItemsBarEl = document.getElementById('activeItemsBar');
@@ -1130,7 +1145,7 @@
       this.highScore = parseInt(localStorage.getItem('tetro_balatro_highscore') || '0', 10);
       this.highScoreValEl.textContent = this.highScore.toLocaleString();
 
-      // Sistema de Itens Roguelike (27 Itens - Passivos e Ativos)
+      // Sistema de Itens Roguelike (28 Itens - Passivos e Ativos)
       this.activeItems = {}; // { itemId: stackCount } para passivos acumuláveis
       this.activeItemInventory = {}; // { itemId: { id, level, cooldownPieces, currentPiecesProgress, maxCharges, chargesRemaining, isReady } }
       this.nextItemLinesTarget = 15; // Gatilho a cada 15 linhas limpas
@@ -1138,18 +1153,20 @@
       this.offeredItems = [];
       this.totalPiecesCount = 0;
 
-      // Variáveis de Mecânica dos Novos Itens
+      // Variáveis de Mecânica dos Itens (todos começam desativados/zerados)
       this.speedMultiplier = 1.0; // Óculos: 2x velocidade de queda
       this.historySnapshots = []; // Relógio: snapshots de estados dos últimos 20 segundos
       this.snapshotTimer = 0;
       this.d6RerollsLeft = 0; // D6: trocas disponíveis na rodada de escolha
       this.isGlitchActive = false; // Glitch: regras de colisão desligadas
       this.glitchTimer = 0;
-      this.smokeTimer = 0; // Extintor: tempo de fumaça ativa
+      this.smokeTimer = 0; // Extintor: tempo de fumaça ativa (inicia desativado)
       this.tijoloCounter = 0; // Tijolo: contador a cada 20 peças
       this.vulcaoCounter = 0; // Vulcão: contador a cada 25 peças
       this.extintorCounter = 0; // Extintor: contador a cada 18 peças
       this.imaWaveTimer = 0; // Ímã: timer para onda senoidal
+      this.jumpTimer = 0; // Learn how to jump: timer de pulos periódicos durante a queda
+      this.nextJumpInterval = 800;
       this.targetingMode = null; // 'bomba' | 'meteoro' | 'vassoura'
       this.vassouraBlocksLeft = 0;
       this.mouseHoverPos = null;
@@ -1242,9 +1259,21 @@
         rot: 0,
         x: Math.floor(COLS / 2) - Math.ceil(shape[0].length / 2),
         y: type === 'I' ? -1 : 0,
-        isTransparent: isTransparent,
-        sapoJumped: false
+        isTransparent: isTransparent
       };
+
+      // Learn how to jump (Tier 0): Reinicia o timer de pulos aleatórios durante a descida desta peça
+      this.jumpTimer = 0;
+      this.nextJumpInterval = 600 + Math.random() * 800;
+      if (this.getItemStacks('learn_how_to_jump') > 0) {
+        const maxX = Math.max(0, COLS - shape[0].length);
+        const randomX = Math.floor(Math.random() * (maxX + 1));
+        if (!this.checkCollision(piece, randomX, piece.y, piece.shape)) {
+          piece.x = randomX;
+          this.sound.playRotate();
+          this.spawnScorePopup('🦘 PULO!', 50);
+        }
+      }
 
       // Se já não cabe ao spawnar, Game Over (ou o Escudo evita)
       if (this.checkCollision(piece, piece.x, piece.y, piece.shape)) {
@@ -1283,7 +1312,7 @@
       this.offeredItems = [];
       this.totalPiecesCount = 0;
 
-      // Reset dos estados dos 27 itens
+      // Reset dos estados dos 28 itens
       this.speedMultiplier = 1.0;
       this.historySnapshots = [];
       this.snapshotTimer = 0;
@@ -1295,12 +1324,20 @@
       this.vulcaoCounter = 0;
       this.extintorCounter = 0;
       this.imaWaveTimer = 0;
+      this.jumpTimer = 0;
+      this.nextJumpInterval = 800;
       this.targetingMode = null;
       this.vassouraBlocksLeft = 0;
       this.mouseHoverPos = null;
+      this.relogioQuebradoTimer = 0;
+      this.relogioQuebradoSpeedFactor = 1.0;
+      this.relogioQuebradoNextInterval = 1000;
 
+      // Garantir que a fumaça comece 100% invisível ao resetar/iniciar
       if (this.smokeOverlayEl) {
         this.smokeOverlayEl.classList.add('hidden');
+        this.smokeOverlayEl.classList.remove('active');
+        this.smokeOverlayEl.style.display = 'none';
       }
 
       // Limpar overlays e modais anteriores
@@ -1402,6 +1439,15 @@
         if (activeKeyMap[e.code] !== undefined && !this.isPaused) {
           this.useActiveItemByIndex(activeKeyMap[e.code]);
           return;
+        }
+
+        // Tecla Backspace física ativa diretamente o Backspace Key se estiver equipado
+        if ((e.code === 'Backspace' || e.key === 'Backspace') && !this.isPaused) {
+          if (this.activeItemInventory['backspace_key']) {
+            e.preventDefault();
+            this.useActiveItem('backspace_key');
+            return;
+          }
         }
 
         // Pausa
@@ -1784,12 +1830,16 @@
         }
       }
 
-      // Extintor (Tier 0): Solta fumaça densa e bloqueia a visão temporariamente a cada 18 peças
+      // Extintor (Tier 0): Solta fumaça densa e bloqueia a visão temporariamente a cada 18 peças (somente se possuir o item)
       if (this.getItemStacks('extintor') > 0) {
         this.extintorCounter = (this.extintorCounter || 0) + 1;
         if (this.extintorCounter % 18 === 0) {
           this.smokeTimer = 5000;
-          if (this.smokeOverlayEl) this.smokeOverlayEl.classList.remove('hidden');
+          if (this.smokeOverlayEl) {
+            this.smokeOverlayEl.classList.remove('hidden');
+            this.smokeOverlayEl.classList.add('active');
+            this.smokeOverlayEl.style.display = 'flex';
+          }
           this.spawnScorePopup('💨 EXTINTOR: MEUS OLHOS!', 80);
         }
       }
@@ -1883,13 +1933,6 @@
           totalChips += fireBonus;
           this.spawnScorePopup(`🔥 FOGO: +${fireBonus.toLocaleString()} FICHAS!`, 60);
         }
-      }
-
-      // Moeda (Tier 1): Ao completar linha, chance de ganhar pontos/fichas extras
-      if (this.getItemStacks('moeda') > 0 && Math.random() < 0.45) {
-        const moedaBonus = (300 + Math.floor(Math.random() * 500)) * this.level;
-        totalChips += moedaBonus;
-        this.spawnScorePopup(`🪙 MOEDA DA SORTE: +${moedaBonus.toLocaleString()} FICHAS!`, 85);
       }
 
       // Back-to-Back (Tetris seguido)
@@ -2138,32 +2181,31 @@
       return this.activeItems[itemId] || 0;
     }
 
-    // Sorteio das 3 cartas pesadas por tier (Tier 0: 60, Tier 1: 35, Tier 2: 20, Tier 3: 12, Tier 4: 6)
+    // Sorteio das 3 cartas: todos os itens possuem a MESMA chance de aparecer (sem peso por tier).
+    // O Tier permanece apenas como informação visual.
+    // Filtro do Trevo de 4 folhas: itens de Tier 0 somem do sorteio enquanto o jogador tiver esse item.
     drawRandomItems(count = 3) {
-      const allItemKeys = Object.keys(ROGUELIKE_ITEMS);
+      let pool = Object.keys(ROGUELIKE_ITEMS);
+
+      // Filtro do item Trevo de 4 folhas: remove itens de Tier 0 do sorteio
+      if (this.getItemStacks('trevo_4_folhas') > 0) {
+        pool = pool.filter(key => ROGUELIKE_ITEMS[key].tier !== 0);
+      }
+
+      // Fallback de segurança se o pool filtrado for menor que a quantidade pedida
+      if (pool.length < count) {
+        pool = Object.keys(ROGUELIKE_ITEMS);
+      }
+
       const chosen = [];
-      const pool = [...allItemKeys];
+      const available = [...pool];
 
-      for (let i = 0; i < count && pool.length > 0; i++) {
-        const totalWeight = pool.reduce((sum, key) => sum + ROGUELIKE_ITEMS[key].weight, 0);
-        let randomVal = Math.random() * totalWeight;
-        let selectedKey = pool[0];
-
-        for (let j = 0; j < pool.length; j++) {
-          const key = pool[j];
-          randomVal -= ROGUELIKE_ITEMS[key].weight;
-          if (randomVal <= 0) {
-            selectedKey = key;
-            break;
-          }
-        }
-
+      for (let i = 0; i < count && available.length > 0; i++) {
+        const randomIndex = Math.floor(Math.random() * available.length);
+        const selectedKey = available[randomIndex];
         chosen.push(ROGUELIKE_ITEMS[selectedKey]);
         // Remove do pool desta mão para nunca sortear duplicatas na mesma escolha de 3
-        const indexInPool = pool.indexOf(selectedKey);
-        if (indexInPool > -1) {
-          pool.splice(indexInPool, 1);
-        }
+        available.splice(randomIndex, 1);
       }
 
       return chosen;
@@ -2412,19 +2454,14 @@
       });
     }
 
-    // Trevo de 4 folhas (Tier 4): Previsão de itens de Tier 0
+    // Trevo de 4 folhas (Tier 4): Filtro de itens de Tier 0 no sorteio
     updateTrevoPreview() {
       if (!this.trevoPreviewEl) return;
       if (this.getItemStacks('trevo_4_folhas') > 0) {
         this.trevoPreviewEl.classList.remove('hidden');
-        const tier0Names = Object.values(ROGUELIKE_ITEMS)
-          .filter(it => it.tier === 0)
-          .map(it => it.name)
-          .slice(0, 4)
-          .join(', ');
         this.trevoPreviewEl.innerHTML = `
-          <span class="trevo-title">🍀 PREVISÃO TIER 0:</span>
-          <span class="trevo-items">${tier0Names}...</span>
+          <span class="trevo-title">🍀 TREVO DE 4 FOLHAS:</span>
+          <span class="trevo-items">Itens de Tier 0 bloqueados no sorteio!</span>
         `;
       } else {
         this.trevoPreviewEl.classList.add('hidden');
@@ -2498,6 +2535,33 @@
           this.triggerBuilderEffect();
           itemState.isReady = false;
           itemState.currentPiecesProgress = 0;
+          this.updateActiveItemsUI();
+          break;
+
+        case 'backspace_key':
+          // Remove TODAS as peças do tabuleiro (limpa o tabuleiro inteiro)
+          this.grid = this.createEmptyGrid();
+          // Zera a pontuação do jogador (score total e fichas/mult)
+          this.score = 0;
+          this.combo = 0;
+          if (this.comboCountEl) this.comboCountEl.textContent = '0';
+          if (this.chipsValEl) this.chipsValEl.textContent = '0';
+          if (this.multValEl) this.multValEl.textContent = 'x1.0';
+          this.updateUI();
+
+          // Efeitos visuais e sonoros de limpeza total
+          if (this.sound.playGlitch) {
+            this.sound.playGlitch();
+          } else {
+            this.sound.playExplosion();
+          }
+          for (let r = 0; r < ROWS; r += 2) {
+            this.particles.spawnLineClear(r, 12, '#ea3c36');
+          }
+          this.spawnScorePopup('⌫ BACKSPACE: TABULEIRO E PONTOS ZERADOS!', 70);
+
+          // Consumido e sai do inventário
+          delete this.activeItemInventory[id];
           this.updateActiveItemsUI();
           break;
 
@@ -2608,7 +2672,11 @@
           break;
         case 3:
           this.smokeTimer = 4000;
-          if (this.smokeOverlayEl) this.smokeOverlayEl.classList.remove('hidden');
+          if (this.smokeOverlayEl) {
+            this.smokeOverlayEl.classList.remove('hidden');
+            this.smokeOverlayEl.classList.add('active');
+            this.smokeOverlayEl.style.display = 'flex';
+          }
           this.spawnScorePopup('🧪 POÇÃO: Fumaça doida solta na tela!', 80);
           break;
         case 4:
@@ -3139,6 +3207,8 @@
         this.smokeTimer -= dt;
         if (this.smokeTimer <= 0 && this.smokeOverlayEl) {
           this.smokeOverlayEl.classList.add('hidden');
+          this.smokeOverlayEl.classList.remove('active');
+          this.smokeOverlayEl.style.display = 'none';
         }
       }
 
@@ -3150,6 +3220,32 @@
       }
 
       if (!this.currentPiece) return;
+
+      // Learn how to jump (Tier 0): Enquanto a peça estiver caindo, pula horizontalmente de forma aleatória em intervalos
+      if (this.getItemStacks('learn_how_to_jump') > 0 && !this.isOnFloor) {
+        this.jumpTimer = (this.jumpTimer || 0) + dt;
+        if (this.jumpTimer >= (this.nextJumpInterval || 800)) {
+          this.jumpTimer = 0;
+          this.nextJumpInterval = 650 + Math.random() * 950; // Salta a cada 650ms a 1600ms durante a queda
+
+          // Deslocamentos aleatórios respeitando regras de colisão normais do jogo
+          const offsets = [-2, -1, 1, 2, -3, 3];
+          for (let i = offsets.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [offsets[i], offsets[j]] = [offsets[j], offsets[i]];
+          }
+
+          for (const offset of offsets) {
+            const targetX = this.currentPiece.x + offset;
+            if (!this.checkCollision(this.currentPiece, targetX, this.currentPiece.y, this.currentPiece.shape)) {
+              this.currentPiece.x = targetX;
+              this.sound.playRotate();
+              this.spawnScorePopup('🦘 PULO!', this.currentPiece.y * BLOCK_SIZE);
+              break;
+            }
+          }
+        }
+      }
 
       // Movimento oscilatório do Ímã (Tier 0): movimento tipo onda senoidal
       if (this.getItemStacks('ima') > 0) {
@@ -3163,21 +3259,25 @@
         }
       }
 
-      // Sapo (Tier 0): Salta repentinamente para os lados uma vez a meio caminho da descida
-      if (this.getItemStacks('sapo') > 0 && !this.currentPiece.sapoJumped && this.currentPiece.y >= 6) {
-        this.currentPiece.sapoJumped = true;
-        const hop = (Math.random() < 0.5 ? -2 : 2);
-        if (!this.checkCollision(this.currentPiece, this.currentPiece.x + hop, this.currentPiece.y, this.currentPiece.shape)) {
-          this.currentPiece.x += hop;
-          this.sound.playRotate();
-          this.spawnScorePopup('🐸 SAPO: PULA, PULA!', this.currentPiece.y * BLOCK_SIZE);
+      // Relógio Quebrado (Tier 0): A velocidade de queda da peça atual muda aleatoriamente
+      if (this.getItemStacks('relogio_quebrado') > 0) {
+        this.relogioQuebradoTimer = (this.relogioQuebradoTimer || 0) + dt;
+        if (this.relogioQuebradoTimer >= (this.relogioQuebradoNextInterval || 900)) {
+          this.relogioQuebradoTimer = 0;
+          this.relogioQuebradoNextInterval = 600 + Math.random() * 1000;
+          // Velocidade imprevisível: pode acelerar (0.35x, 0.55x, 0.8x) ou desacelerar (1.4x, 2.0x)
+          const speeds = [0.35, 0.55, 0.8, 1.0, 1.4, 2.0];
+          this.relogioQuebradoSpeedFactor = speeds[Math.floor(Math.random() * speeds.length)];
         }
+      } else {
+        this.relogioQuebradoSpeedFactor = 1.0;
       }
 
       // Velocidade de Queda baseada no Nível e nos Itens
       // Pena (Tier 3): 20% mais devagar por stack (* 1.20)
       // Balão (Tier 1): 20% mais devagar (* 1.20)
       // Óculos (Tier 1): 2x mais rápido (/ speedMultiplier)
+      // Relógio Quebrado (Tier 0): oscilação imprevisível
       const baseDelay = Math.max(80, Math.floor(780 * Math.pow(0.86, this.level - 1)));
       let slowFactor = 1.0;
       const penaStacks = this.getItemStacks('pena');
@@ -3187,7 +3287,8 @@
       if (this.getItemStacks('balao') > 0) {
         slowFactor *= 1.20;
       }
-      const gravityDelay = Math.max(40, Math.round((baseDelay * slowFactor) / (this.speedMultiplier || 1.0)));
+      const brokenClockFactor = this.relogioQuebradoSpeedFactor || 1.0;
+      const gravityDelay = Math.max(30, Math.round((baseDelay * slowFactor * brokenClockFactor) / (this.speedMultiplier || 1.0)));
 
       this.dropCounter += dt;
       if (this.dropCounter >= gravityDelay) {
